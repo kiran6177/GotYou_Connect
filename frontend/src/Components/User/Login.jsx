@@ -26,7 +26,7 @@ function Login() {
     },[token])
 
     useEffect(()=>{
-        if(error){
+        if(error && !OTP){
             toast.error(error)
             dispatch(removeError())
             return
@@ -38,7 +38,7 @@ function Login() {
                 navigate("/",{replace:true})
             },1000)
             return
-        }else if(success && !userData){
+        }else if(success && !userData && !OTP){
             toast.success("Verify your Account")
             setOTP(true)
             return
@@ -95,7 +95,7 @@ function Login() {
         </div>
       </div>
       <AuthBanner/>
-      {OTP && <OtpModal from="LOGIN" setOTP={setOTP} />}
+      {OTP && <OtpModal from="LOGIN" setOTP={setOTP} email={email} />}
 
     </div>
   )

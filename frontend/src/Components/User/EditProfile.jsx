@@ -40,7 +40,6 @@ function EditProfile() {
         }
         if(success && data){
             setOTP(true)
-            dispatch(removeData())
         }
         if(error){
             toast.error(error)
@@ -114,7 +113,7 @@ function EditProfile() {
                 <button type='button'onClick={()=>setChange(true)} className={`text-center bg-[#d82525] text-white py-2 rounded-sm tracking-wider font-bold w-full`}>CHANGE PASSWORD</button>
             </form>
         {OTP && <OtpModal from="EMAIL" setOTP={setOTP} email={data}/>}
-        {change && <ChangePasswordModal  setChange={setChange} />}
+        {change && <ChangePasswordModal  setChange={setChange}  />}
     </div>
   )
 }

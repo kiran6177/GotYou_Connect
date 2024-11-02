@@ -77,3 +77,14 @@ export const changePassword = createAsyncThunk("user/changePassword",async (data
         return thunkApi.rejectWithValue(error.response.data.error)
     }
 })
+
+export const resendOtp = createAsyncThunk("user/resendOtp",async (data,thunkApi)=>{
+    try {
+        const response = await axiosInstance.post("/auth/resendotp",data)
+        return response.data
+    } catch (error) {
+        rejectToken(thunkApi,error)
+        return thunkApi.rejectWithValue(error.response.data.error)
+    }
+})
+

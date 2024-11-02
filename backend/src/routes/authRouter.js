@@ -1,5 +1,5 @@
 import express from "express";
-import { changePassword, editProfile, login, logout, manageMFA, signup, verifyOtp } from "../controllers/authController.js";
+import { changePassword, editProfile, login, logout, manageMFA, resendOtp, signup, verifyOtp } from "../controllers/authController.js";
 import { isUserLogin } from "../middleware/authHandler.js";
 import upload from "../utils/multer.js";
 
@@ -22,6 +22,9 @@ authRouter.route("/manageMFA")
 
 authRouter.route("/verifyotp")
 .post(verifyOtp)
+
+authRouter.route("/resendotp")
+.post(resendOtp)
 
 authRouter.route("/changepassword")
 .put(isUserLogin,changePassword)

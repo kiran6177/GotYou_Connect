@@ -91,7 +91,7 @@ export const login = async (req, res, next) => {
         );
       }, 60 * 1000);
 
-      res.json({ success: findUser?._id });
+      res.status(200).json({ success: findUser?._id });
     } else {
       const access_token = await createToken({ _id: userData._id });
       const refresh_token = await createRefreshToken({ _id: userData._id });
@@ -518,3 +518,33 @@ export const verifyOtp = async (req, res, next) => {
     next(error);
   }
 };
+
+export const resendOtp = async (req,res) =>{
+  try {
+    const { email } = req.body;
+    const otp = generateSecretKey();
+      const hashedOTP = await hash(otp, SALT_ROUNDS);
+
+      const mailSend = await sendmail(email, otp);
+      console.log(otp);
+      if (!mailSend) {
+        const error = new Error();
+        error.statusCode = 500;
+        error.reasons = ["Ooops. Error sending email!!"];
+        throw error;
+      }
+      await UserModel.findOneAndUpdate(
+        { email: email },
+        { $set: { mfaSecret: hashedOTP } }
+      );
+      setTimeout(async () => {
+        await UserModel.findOneAndUpdate(
+          { email: email },
+          { $set: { mfaSecret: null } }
+        );
+      }, 60 * 1000);
+      res.status(200).json({success:true})
+  } catch (error) {
+    next(error)
+  }
+}

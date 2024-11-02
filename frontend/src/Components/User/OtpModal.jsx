@@ -2,14 +2,16 @@ import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
-import { verifyOTP } from '../../features/User/userActions'
+import { resendOtp, verifyOTP } from '../../features/User/userActions'
 import { toast } from 'sonner'
-import { reset } from '../../features/User/userSlice'
+import { removeError, removeMessage, reset } from '../../features/User/userSlice'
 
 function OtpModal({from,setOTP,email}) {
     const [otpValue,setOtpValue] = useState(new Array())
     const [showInp,setShowInp] = useState(new Array(4).fill(false))
     const [time,setTime] = useState(60);
+
+    const [restart,setRestart] = useState(false);
 
     const oneRef = useRef()
     const twoRef = useRef()
@@ -19,11 +21,22 @@ function OtpModal({from,setOTP,email}) {
     const dispatch = useDispatch()
     const navigate = useNavigate();
 
-    const {success,loading,message,error} = useSelector(state=>state.user);
+    const {success,loading,message,error,userData} = useSelector(state=>state.user);
 
     useEffect(()=>{
-        if(message){ 
+        if(error){
+            toast.error(error)
+            dispatch(removeError())
+            return
+        }
+        if(message === "OTP Resend Successfully"){
             toast.success(message)
+            setRestart(!restart)
+            dispatch(removeMessage())
+            return
+        }
+        if(message){ 
+            toast.success(message) 
             setTimeout(()=>{
                 setOTP(false)
                 if(from === "SIGNUP"){
@@ -35,10 +48,7 @@ function OtpModal({from,setOTP,email}) {
             },1000)
             return
         }
-        if(error){
-            toast.error(error)
-            return
-        }
+
     },[error,message])
 
     useEffect(()=>{
@@ -58,7 +68,7 @@ function OtpModal({from,setOTP,email}) {
 
     useEffect(()=>{
         let inter
-        const storedTime = localStorage.getItem('otpTime');
+        const storedTime = localStorage.getItem('otpTime') ?? 60;;
             if(storedTime){
               setTime(parseInt(storedTime))
             }else{
@@ -82,7 +92,7 @@ function OtpModal({from,setOTP,email}) {
             return ()=>{
                 clearInterval(inter)
             }
-    },[])
+    },[restart])
     
     const handleInsert = (e,index)=>{
         const target = e.target.value;
@@ -123,11 +133,13 @@ function OtpModal({from,setOTP,email}) {
     const handleVerifyOTP = ()=>{
         localStorage.removeItem('otpTime')
         const otp = otpValue.join("");
-        console.log(success,from)
+        console.log(success,from,email)
         dispatch(verifyOTP({otp,success,from,email}))
-        // setTimeout(()=>{ 
-        //     dispatch(reset())
-        // },1000)
+    }
+
+    const handleResend = ()=>{
+        let emailToSend = email ;
+        dispatch(resendOtp({email:emailToSend}))
     }
 
   return createPortal(
@@ -147,7 +159,7 @@ function OtpModal({from,setOTP,email}) {
             <button onClick={handleVerifyOTP} className="bg-black dark:bg-white border-2 border-black text-white dark:text-black py-2 rounded-md w-full tracking-wider font-semibold">Verify</button>
             <div className='my-4 flex justify-between'>
                 <h3 className='text-xs sm:text-sm'>00 : {time < 10 ? `0${time}` : time}</h3>
-                <h2 className="text-xs  text-[#36393F] ">Don't get the code ? <Link  className="text-blue-700">Send again</Link></h2>
+                {time <= 0 && <h2 className="text-xs  text-[#36393F] ">Don't get the code ? <button type='button' onClick={handleResend} className="text-blue-700">Send again</button></h2>}
             </div>
         </div>
     </div>,

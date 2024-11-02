@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { changePassword, editProfile, login, logout, manageMFA, signup, verifyOTP } from "./userActions";
+import { changePassword, editProfile, login, logout, manageMFA, resendOtp, signup, verifyOTP } from "./userActions";
 
 const initialState = {
     userData : null,
@@ -19,6 +19,9 @@ const userSlice = createSlice({
             state.loading = false
             state.error = ""
             state.success = false 
+            state.message = ""
+        },
+        removeMessage:(state,action)=>{
             state.message = ""
         },
         removeError:(state,action)=>{
@@ -69,6 +72,7 @@ const userSlice = createSlice({
                     state.userData = action.payload.user 
                     state.token = true
                 }
+                state.data = state.data && null
                 state.loading = false   
             })
             .addCase(verifyOTP.pending,(state)=>{
@@ -164,10 +168,25 @@ const userSlice = createSlice({
                 state.loading = false
                 state.error = action.payload
             })
+            .addCase(resendOtp.fulfilled,(state,action)=>{
+                console.log(action);
+                if(action.payload?.success){
+                    state.message = "OTP Resend Successfully"
+                }
+                state.loading = false
+            })
+            .addCase(resendOtp.pending,(state)=>{
+                state.loading = true
+            })
+            .addCase(resendOtp.rejected,(state,action)=>{
+                console.log(action)
+                state.loading = false
+                state.error = action.payload
+            })
     }
 })
 
 export const userReducer = userSlice.reducer;
 
-export const { reset , removeError, removeData, logoutUser, setIsAuthenticated } = userSlice.actions;
+export const { reset , removeError, removeData, removeMessage, logoutUser, setIsAuthenticated } = userSlice.actions;
 

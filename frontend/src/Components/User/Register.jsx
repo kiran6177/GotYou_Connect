@@ -149,7 +149,7 @@ function Register() {
             </h2>
         </div>
     </div>
-    {OTP && <OtpModal from="SIGNUP" setOTP={setOTP} />}
+    {OTP && <OtpModal from="SIGNUP" setOTP={setOTP} email={email} />}
 </div>
   )
 }
