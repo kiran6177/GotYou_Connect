@@ -18,7 +18,7 @@ connection()
 app.use(helmet())
 app.use(cookieParser())
 app.use(cors({
-    origin:["http://localhost:3000","https://got-you.vercel.app"],
+    origin:"https://got-you.vercel.app",
     credentials:true,
 }))
 app.use(express.urlencoded({extended:true}))
