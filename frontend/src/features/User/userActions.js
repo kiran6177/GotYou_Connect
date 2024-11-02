@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { axiosInstance } from "../../axios";
+import { axiosInstance } from "../../utils/axios";
 import { setIsAuthenticated } from "./userSlice";
 
 const rejectToken = (thunkApi,error)=>{

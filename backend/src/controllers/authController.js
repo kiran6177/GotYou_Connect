@@ -60,10 +60,11 @@ export const login = async (req, res, next) => {
       _id: findUser._id,
       name: findUser.name,
       email: findUser.email,
-      mobile:findUser.mobile,
+      mobile: findUser.mobile,
       image: findUser.image,
       friends: findUser.friends,
       mfaEnabled: findUser.mfaEnabled,
+      lastLoginTime: findUser.lastLoginTime,
       incomingRequests: findUser.incomingRequests,
       requestedUsers: findUser.requestedUsers,
     };
@@ -79,33 +80,39 @@ export const login = async (req, res, next) => {
         error.reasons = ["Ooops. Error sending email!!"];
         throw error;
       }
-      await UserModel.findByIdAndUpdate({_id:findUser?._id},{$set:{mfaSecret:hashedOTP}})
+      await UserModel.findByIdAndUpdate(
+        { _id: findUser?._id },
+        { $set: { mfaSecret: hashedOTP } }
+      );
       setTimeout(async () => {
         await UserModel.findByIdAndUpdate(
           { _id: findUser._id },
           { $set: { mfaSecret: null } }
         );
       }, 60 * 1000);
-  
+
       res.json({ success: findUser?._id });
     } else {
-        const access_token = await createToken({ _id: userData._id });
-        const refresh_token = await createRefreshToken({ _id: userData._id });
+      const access_token = await createToken({ _id: userData._id });
+      const refresh_token = await createRefreshToken({ _id: userData._id });
 
-        res.cookie("token", access_token, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 60 * 1000, //1 min
-        });
+      res.cookie("token", access_token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 1000, //1 min
+      });
 
-        res.cookie("refresh", refresh_token, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
-        });
-        await UserModel.findByIdAndUpdate({_id:userData._id},{$set:{lastLoginTime:new Date()}})
+      res.cookie("refresh", refresh_token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
+      });
+      await UserModel.findByIdAndUpdate(
+        { _id: userData._id },
+        { $set: { lastLoginTime: new Date() } }
+      );
 
-        res.status(200).json({ user: userData });
+      res.status(200).json({ user: userData });
     }
   } catch (error) {
     next(error);
@@ -259,11 +266,7 @@ export const editProfile = async (req, res, next) => {
   try {
     const { name, email, mobile } = req.body;
     const { _id } = req.user;
-    if (
-      name?.trim() === "" &&
-      email?.trim() === "" &&
-      mobile?.trim() === "" 
-    ) {
+    if (name?.trim() === "" && email?.trim() === "" && mobile?.trim() === "") {
       throw CustomError.createError("Please fill up the fields!!", 400);
     }
 
@@ -289,37 +292,37 @@ export const editProfile = async (req, res, next) => {
       return;
     }
 
-
-
     const userExist = await UserModel.findOne({ _id });
 
     if (!userExist) {
       throw CustomError.createError("Invalid Request!!", 400);
     }
     let image;
-    if(req.file){
+    if (req.file) {
       if (!req.file?.mimetype.startsWith("image/")) {
         throw CustomError.createError("Selected file is not an Image!!");
       }
-      if(userExist?.image){
-        await destroyFromCloudinary(userExist?.image,USER_PROFILE_FOLDER)
+      if (userExist?.image) {
+        await destroyFromCloudinary(userExist?.image, USER_PROFILE_FOLDER);
       }
-      const base64EncodedImage = Buffer.from(req.file.buffer).toString("base64");
+      const base64EncodedImage = Buffer.from(req.file.buffer).toString(
+        "base64"
+      );
       const dataUri = `data:${req.file.mimetype};base64,${base64EncodedImage}`;
       const result = await cloudinaryV2.uploader.upload(dataUri, {
         folder: USER_PROFILE_FOLDER,
       });
-  
+
       image = result.secure_url;
     }
 
-    if(userExist?.email !== email){
+    if (userExist?.email !== email) {
       const updatable = {
         name,
         mobile,
-      }
-      if(image){
-        updatable.image = image
+      };
+      if (image) {
+        updatable.image = image;
       }
       const otp = generateSecretKey();
       const hashedOTP = await hash(otp, SALT_ROUNDS);
@@ -334,7 +337,7 @@ export const editProfile = async (req, res, next) => {
       }
       await UserModel.findByIdAndUpdate(
         { _id },
-        { $set: {...updatable,mfaSecret:hashedOTP} },
+        { $set: { ...updatable, mfaSecret: hashedOTP } },
         { new: true }
       );
       setTimeout(async () => {
@@ -344,7 +347,7 @@ export const editProfile = async (req, res, next) => {
         );
       }, 60 * 1000);
 
-      return res.status(200).json({success:userExist?._id, email:email})
+      return res.status(200).json({ success: userExist?._id, email: email });
     }
     console.log(name, email, mobile);
 
@@ -353,8 +356,8 @@ export const editProfile = async (req, res, next) => {
       email,
       mobile,
     };
-    if(image){
-      userData.image = image
+    if (image) {
+      userData.image = image;
     }
     const updatedUser = await UserModel.findByIdAndUpdate(
       { _id },
@@ -371,9 +374,13 @@ export const editProfile = async (req, res, next) => {
 
 export const changePassword = async (req, res, next) => {
   try {
-    const { oPassword, password , cPassword} = req.body;
+    const { oPassword, password, cPassword } = req.body;
     const { _id } = req.user;
-    if (oPassword?.trim() === "" && password?.trim() === "" && cPassword?.trim() === ""   ) {
+    if (
+      oPassword?.trim() === "" &&
+      password?.trim() === "" &&
+      cPassword?.trim() === ""
+    ) {
       throw CustomError.createError("Please fill up the fields!!", 400);
     }
 
@@ -395,19 +402,13 @@ export const changePassword = async (req, res, next) => {
       );
     }
 
-    if(cPassword?.trim() === ""){
-      throw CustomError.createError(
-        "Please Confirm your Password!!",
-        400
-      );
-  }
+    if (cPassword?.trim() === "") {
+      throw CustomError.createError("Please Confirm your Password!!", 400);
+    }
 
-  if(password?.trim() !== cPassword?.trim()){
-      throw CustomError.createError(
-        "Password mismatch!!",
-        400
-      );
-  }
+    if (password?.trim() !== cPassword?.trim()) {
+      throw CustomError.createError("Password mismatch!!", 400);
+    }
 
     const userExist = await UserModel.findOne({ _id });
 
@@ -433,8 +434,13 @@ export const manageMFA = async (req, res, next) => {
   try {
     const { _id } = req.user;
     const userPreference = await UserModel.findById({ _id });
-    await UserModel.findByIdAndUpdate({_id},{$set:{mfaEnabled:!userPreference?.mfaEnabled}})
-    res.status(200).json({ success: true ,status:!userPreference?.mfaEnabled});
+    await UserModel.findByIdAndUpdate(
+      { _id },
+      { $set: { mfaEnabled: !userPreference?.mfaEnabled } }
+    );
+    res
+      .status(200)
+      .json({ success: true, status: !userPreference?.mfaEnabled });
   } catch (error) {
     next(error);
   }
@@ -442,55 +448,71 @@ export const manageMFA = async (req, res, next) => {
 
 export const verifyOtp = async (req, res, next) => {
   try {
-    const { id,otp,from,email } = req.body;
+    const { id, otp, from, email } = req.body;
 
-    console.log("VERIFY : ",id,otp,from,email)
+    console.log("VERIFY : ", id, otp, from, email);
 
-    const userExist = await UserModel.findById({ _id:id });
+    const userExist = await UserModel.findById({ _id: id });
     if (!userExist?.mfaSecret) {
       throw CustomError.createError("OTP timed out!!", 400);
     }
-    const isVerified = await compare(otp,userExist.mfaSecret);
-    if(isVerified){
-      if(!userExist?.isVerified){
-        await UserModel.findByIdAndUpdate({_id:id},{$set:{isVerified:true}})
+    const isVerified = await compare(otp, userExist.mfaSecret);
+    if (isVerified) {
+      if (!userExist?.isVerified) {
+        await UserModel.findByIdAndUpdate(
+          { _id: id },
+          { $set: { isVerified: true } }
+        );
       }
-    }else{
+    } else {
       throw CustomError.createError("Invalid OTP!!", 400);
     }
-    if(from === "SIGNUP"){
-      res.status(202).json({success:true})
-    }else if(from === "LOGIN"){
+    if (from === "SIGNUP") {
+      res.status(202).json({ success: true });
+    } else if (from === "LOGIN") {
       const userData = {
         _id: userExist._id,
         name: userExist.name,
         email: userExist.email,
-        mobile:userExist.mobile,
+        mobile: userExist.mobile,
         image: userExist.image,
         friends: userExist.friends,
+        lastLoginTime: userExist.lastLoginTime,
         mfaEnabled: userExist.mfaEnabled,
         incomingRequests: userExist.incomingRequests,
         requestedUsers: userExist.requestedUsers,
       };
       const access_token = await createToken({ _id: userData._id });
       const refresh_token = await createRefreshToken({ _id: userData._id });
-      await UserModel.findByIdAndUpdate({_id:userData._id},{$set:{lastLoginTime:new Date()}})
+      await UserModel.findByIdAndUpdate(
+        { _id: userData._id },
+        { $set: { lastLoginTime: new Date() } }
+      );
 
-        res.cookie("token", access_token, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 60 * 1000, //1 min
-        });
+      res.cookie("token", access_token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 1000, //1 min
+      });
 
-        res.cookie("refresh", refresh_token, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
+      res.cookie("refresh", refresh_token, {
+        httpOnly: true,
+        secure: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
+      });
+      res.status(200).json({ user: userData });
+    } else {
+      await UserModel.findByIdAndUpdate(
+        { _id: id },
+        { $set: { email: email } }
+      );
+      res
+        .status(202)
+        .json({
+          success: true,
+          message: "Email Updated Successfully",
+          email: email,
         });
-      res.status(200).json({user:userData})
-    }else{
-      await UserModel.findByIdAndUpdate({_id:id},{$set:{email:email}})
-      res.status(202).json({success:true,message:"Email Updated Successfully",email:email})
     }
   } catch (error) {
     next(error);

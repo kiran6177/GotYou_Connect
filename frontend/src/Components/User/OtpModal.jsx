@@ -131,9 +131,9 @@ function OtpModal({from,setOTP,email}) {
     }
 
   return createPortal(
-    <div className='fixed h-screen w-screen z-20 top-0 bg-[#0000007e] flex justify-center items-center'>
-        <div className='bg-white rounded-md w-[80%] sm:w-[70%] md:w-[55%] lg:w-[40%] xl:w-[30%] p-8 relative'>
-            <div className='text-black absolute right-5 top-5' onClick={()=>{setOTP(false);dispatch(reset())}}>
+    <div className='fixed h-screen w-screen z-20 top-0 bg-[#0000007e]  flex justify-center items-center'>
+        <div className='shadow-xl shadow-black dark:text-white bg-white dark:bg-black  dark:shadow-[#ffffff09] rounded-md w-[80%] sm:w-[70%] md:w-[55%] lg:w-[40%] xl:w-[30%] p-8 relative'>
+            <div className='text-black dark:text-white cursor-pointer absolute right-5 top-5' onClick={()=>{setOTP(false);dispatch(reset())}}>
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
             </div>
             <h2 className='text-2xl font-bold text-center'>Enter your OTP</h2>
@@ -144,7 +144,7 @@ function OtpModal({from,setOTP,email}) {
                 {otpValue[2] && showInp[2]? <p className='font-bold text-2xl'  onClick={()=>handleShowInp(2)}>{otpValue[2]}</p> :<input ref={threeRef} type="number" value={otpValue[2]} onChange={(e)=>handleInsert(e,2)} className='bg-[#EEEEEE] w-[2rem] h-[2rem] px-3 rounded-full' />}
                 {otpValue[3] && showInp[3]? <p className='font-bold text-2xl'  onClick={()=>handleShowInp(3)}>{otpValue[3]}</p> :<input ref={fourRef} type="number" value={otpValue[3]} onChange={(e)=>handleInsert(e,3)} className='bg-[#EEEEEE] w-[2rem] h-[2rem] px-3  rounded-full' />}
             </div>
-            <button onClick={handleVerifyOTP} className="bg-black text-white py-2 rounded-sm w-full tracking-wider font-semibold">Verify</button>
+            <button onClick={handleVerifyOTP} className="bg-black dark:bg-white border-2 border-black text-white dark:text-black py-2 rounded-md w-full tracking-wider font-semibold">Verify</button>
             <div className='my-4 flex justify-between'>
                 <h3 className='text-xs sm:text-sm'>00 : {time < 10 ? `0${time}` : time}</h3>
                 <h2 className="text-xs  text-[#36393F] ">Don't get the code ? <Link  className="text-blue-700">Send again</Link></h2>

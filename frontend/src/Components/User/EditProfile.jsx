@@ -21,7 +21,7 @@ function EditProfile() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const {loading,success,data,error,userData} = useSelector(state=>state.user);
+    const {loading,success,data,error,userData,message} = useSelector(state=>state.user);
 
     useEffect(()=>{
         if(userData){
@@ -33,6 +33,11 @@ function EditProfile() {
     },[userData])
 
     useEffect(()=>{
+        if(message === "Updated Successfully"){
+            toast.success(message)
+            dispatch(reset())
+            return
+        }
         if(success && data){
             setOTP(true)
             dispatch(removeData())
@@ -42,7 +47,7 @@ function EditProfile() {
             dispatch(reset())
             return
         }
-    },[success,data,error])
+    },[success,data,error,message])
 
     const handleSubmit = (e)=>{
         e.preventDefault()
@@ -97,15 +102,15 @@ function EditProfile() {
   return (
     <div className='w-[65%] mx-auto'>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6 items-center">
-                <div className='border-2 border-black rounded-full w-[7rem] h-[7rem] flex items-center justify-center overflow-hidden relative'>
+                <div className='border-2 border-black dark:border-white rounded-full w-[7rem] h-[7rem] flex items-center justify-center overflow-hidden relative'>
                     <img src={imageFile ? URL.createObjectURL(imageFile) :imageSrc ? imageSrc :"/assets/unknown_avatar.jpg"} alt="" className='object-cover h-full absolute' />
                 </div>
-                    <button type='button' onClick={()=>inputRef.current.click()} className='hover:scale-[1.02] transition-all duration-100 ease-linear'>Change Profile Picture</button>
+                    <button type='button' onClick={()=>inputRef.current.click()} className='hover:scale-[1.02] transition-all dark:text-white duration-100 ease-linear'>Change Profile Picture</button>
                 <input type="file" ref={inputRef} onChange={(e)=>setImageFile(e.target.files[0])} className='hidden' />
                 <input type="text" value={name} onChange={(e)=>setName(e.target.value)} placeholder="Name" className="bg-[#EEEEEE] text-sm p-3 rounded-sm w-[100%]" />
                 <input type="text" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="Email" className="bg-[#EEEEEE] text-sm p-3 rounded-sm w-[100%]" />
                 <input type="number" value={mobile} onChange={(e)=>setMobile(e.target.value)} placeholder="Mobile" className="bg-[#EEEEEE] text-sm p-3 rounded-sm w-[100%]" />
-                <button disabled={loading} className={`${loading ? "bg-[#0000009f]" :"bg-[#000000]"} text-white py-2 rounded-sm tracking-wider font-bold w-full`}>{loading ? "UPDATING..." :"UPDATE"}</button>
+                <button disabled={loading} className={`${loading ? "bg-[#0000009f] dark:bg-[#40404099]" :"bg-[#000000] "} text-white border-black dark:border-white border-2 py-2 rounded-sm tracking-wider font-bold w-full`}>{loading ? "UPDATING..." :"UPDATE"}</button>
                 <button type='button'onClick={()=>setChange(true)} className={`text-center bg-[#d82525] text-white py-2 rounded-sm tracking-wider font-bold w-full`}>CHANGE PASSWORD</button>
             </form>
         {OTP && <OtpModal from="EMAIL" setOTP={setOTP} email={data}/>}
