@@ -6,6 +6,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { connection } from './config/connection.js';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -23,6 +24,15 @@ app.use(cors({
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 
+const limiter = rateLimit({
+    windowMs: 1000,
+    limit:20,
+    handler : (req,res,next)=>{
+        res.status(429).json({error:"Too many Requests!!"})
+    }
+})
+
+app.use(limiter)
 
 app.get("/",(req,res)=>{
     res.status(200).json({success:"WORKING"})
