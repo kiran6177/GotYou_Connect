@@ -34,6 +34,7 @@ export const isUserLogin = async (req, res, next) => {
               res.cookie("token", newAccessToken, {
                 httpOnly: true,
                 secure: true,
+                sameSite:"None",
                 maxAge: 60 * 1000,
               });
               next();
@@ -73,6 +74,7 @@ export const isUserLogin = async (req, res, next) => {
             res.cookie("token", newAccessToken, {
               httpOnly: true,
               secure: true,
+              sameSite:"None",
               maxAge: 60 * 1000,
             });
             next();

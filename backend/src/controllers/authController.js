@@ -99,18 +99,23 @@ export const login = async (req, res, next) => {
       res.cookie("token", access_token, {
         httpOnly: true,
         secure: true,
+        sameSite:"None",
         maxAge: 60 * 1000, //1 min
       });
 
       res.cookie("refresh", refresh_token, {
         httpOnly: true,
         secure: true,
+        sameSite:"None",
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
       });
-      await UserModel.findByIdAndUpdate(
+      const newData =  await UserModel.findByIdAndUpdate(
         { _id: userData._id },
-        { $set: { lastLoginTime: new Date() } }
+        { $set: { lastLoginTime: new Date() } },
+        {new : true}
       );
+
+      userData.lastLoginTime = newData?.lastLoginTime;
 
       res.status(200).json({ user: userData });
     }
@@ -248,12 +253,14 @@ export const logout = async (req, res, next) => {
     res.cookie("token", null, {
       httpOnly: true,
       secure: true,
+      sameSite:"None",
       maxAge: 1000, //1 min
     });
 
     res.cookie("refresh", null, {
       httpOnly: true,
       secure: true,
+      sameSite:"None",
       maxAge: 1000, //30 days
     });
     res.status(200).json({ success: true });
@@ -492,12 +499,14 @@ export const verifyOtp = async (req, res, next) => {
       res.cookie("token", access_token, {
         httpOnly: true,
         secure: true,
+        sameSite:"None",
         maxAge: 60 * 1000, //1 min
       });
 
       res.cookie("refresh", refresh_token, {
         httpOnly: true,
         secure: true,
+        sameSite:"None",
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
       });
       res.status(200).json({ user: userData });
