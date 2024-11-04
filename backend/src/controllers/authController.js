@@ -97,7 +97,6 @@ export const login = async (req, res, next) => {
       const refresh_token = await createRefreshToken({ _id: userData._id });
 
       res.cookie("token", access_token, {
-        domain:'vercel.app',
         httpOnly: true,
         secure: true,
         sameSite:"None",
@@ -105,7 +104,6 @@ export const login = async (req, res, next) => {
       });
 
       res.cookie("refresh", refresh_token, {
-        domain:'vercel.app',
         httpOnly: true,
         secure: true,
         sameSite:"None",
@@ -253,7 +251,6 @@ export const signup = async (req, res, next) => {
 export const logout = async (req, res, next) => {
   try {
     res.cookie("token", null, {
-      domain:'vercel.app',
       httpOnly: true,
       secure: true,
       sameSite:"None",
@@ -261,7 +258,6 @@ export const logout = async (req, res, next) => {
     });
 
     res.cookie("refresh", null, {
-      domain:'vercel.app',
       httpOnly: true,
       secure: true,
       sameSite:"None",
@@ -501,7 +497,6 @@ export const verifyOtp = async (req, res, next) => {
       );
 
       res.cookie("token", access_token, {
-        domain:'vercel.app',
         httpOnly: true,
         secure: true,
         sameSite:"None",
@@ -509,7 +504,6 @@ export const verifyOtp = async (req, res, next) => {
       });
 
       res.cookie("refresh", refresh_token, {
-        domain:'vercel.app',
         httpOnly: true,
         secure: true,
         sameSite:"None",

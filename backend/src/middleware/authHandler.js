@@ -32,7 +32,6 @@ export const isUserLogin = async (req, res, next) => {
 
 
               res.cookie("token", newAccessToken, {
-                domain:'vercel.app',
                 httpOnly: true,
                 secure: true,
                 sameSite:"None",
@@ -73,7 +72,6 @@ export const isUserLogin = async (req, res, next) => {
             req.user = userWOP;
 
             res.cookie("token", newAccessToken, {
-              domain:'vercel.app',
               httpOnly: true,
               secure: true,
               sameSite:"None",
