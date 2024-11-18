@@ -4,60 +4,61 @@ import {
   passwordRegex,
   USER_PROFILE_FOLDER,
 } from "../common/constants.js";
-import { CustomError } from "../common/CustomError.js";
+// import { CustomError } from "../common/CustomError.js";
 import { compare, hash } from "bcrypt";
 import UserModel from "../models/userModel.js";
 import { createRefreshToken, createToken } from "../utils/jwt.js";
 import cloudinaryV2, { destroyFromCloudinary } from "../utils/cloudinary.js";
 import { generateSecretKey } from "../utils/otp.js";
 import sendmail from "../utils/nodemailer.js";
+import { NextFunction, Request, Response } from "express";
+import { CustomError } from "../interfaces/customError.js";
+import { User, UserData } from "../interfaces/appCustom.js";
+import { Document } from "mongoose";
 const SALT_ROUNDS = 10;
 
-export const login = async (req, res, next) => {
+export const login = async (req : Request, res : Response, next : NextFunction) => {
   try {
     const { email, password } = req.body;
     if (email?.trim() === "" && password?.trim() === "") {
-      throw CustomError.createError("Please fill up the fields!!", 400);
+      throw new CustomError(400,["Please fill up the fields!!"]);
     }
 
     if (email?.trim() === "") {
-      throw CustomError.createError("Please enter a email!!", 400);
+      throw new CustomError(400,["Please enter a email!!"]);
     }
 
     if (!emailRegex.test(email)) {
-      throw CustomError.createError("Please enter a valid email!!", 400);
+      throw new CustomError(400,["Please enter a valid email!!"]);
     }
 
     if (password?.trim() === "") {
-      throw CustomError.createError("Please enter a password!!", 400);
+      throw new CustomError(400,["Please enter a password!!"]);
     }
 
     if (password?.trim().length < 8) {
-      throw CustomError.createError(
-        "Password should contain minimum 8 digits!!",
-        400
-      );
+      throw new CustomError(400,[
+        "Password should contain minimum 8 digits!!"]);
     }
 
     if (!passwordRegex.test(password)) {
-      throw CustomError.createError(
-        "Password should contain alphabets and digits!!",
-        400
+      throw new CustomError(400,[
+        "Password should contain alphabets and digits!!"]
       );
     }
 
     const findUser = await UserModel.findOne({ email });
 
     if (!findUser) {
-      throw CustomError.createError("User Not Found!!", 400);
+      throw new CustomError(400,["User Not Found!!"]);
     }
     const isUser = await compare(password, findUser.password);
     if (!isUser) {
-      throw CustomError.createError("Invalid Password!!", 400);
+      throw new CustomError(400,["Invalid Password!!"]);
     }
 
-    const userData = {
-      _id: findUser._id,
+    const userData : UserData = {
+      _id: findUser._id.toString(),
       name: findUser.name,
       email: findUser.email,
       mobile: findUser.mobile,
@@ -75,9 +76,9 @@ export const login = async (req, res, next) => {
       const mailSend = await sendmail(email, otp);
       console.log(otp);
       if (!mailSend) {
-        const error = new Error();
-        error.statusCode = 500;
-        error.reasons = ["Ooops. Error sending email!!"];
+        const error = new CustomError(500,["Ooops. Error sending email!!"]);
+        // error.statusCode = 500;
+        // error.reasons = ["Ooops. Error sending email!!"];
         throw error;
       }
       await UserModel.findByIdAndUpdate(
@@ -99,14 +100,14 @@ export const login = async (req, res, next) => {
       res.cookie("token", access_token, {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
+        sameSite:"none",
         maxAge: 60 * 1000, //1 min
       });
 
       res.cookie("refresh", refresh_token, {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
+        sameSite:"none",
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
       });
       const newData =  await UserModel.findByIdAndUpdate(
@@ -115,7 +116,7 @@ export const login = async (req, res, next) => {
         {new : true}
       );
 
-      userData.lastLoginTime = newData?.lastLoginTime;
+      userData.lastLoginTime = newData?.lastLoginTime as Date;
 
       res.status(200).json({ user: userData });
     }
@@ -124,7 +125,7 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const signup = async (req, res, next) => {
+export const signup = async (req : Request, res : Response, next : NextFunction) => {
   try {
     const { name, email, mobile, password, cPassword } = req.body;
     if (
@@ -135,64 +136,62 @@ export const signup = async (req, res, next) => {
       cPassword?.trim() === "" &&
       !req.file
     ) {
-      throw CustomError.createError("Please fill up the fields!!", 400);
+      throw new CustomError(400,["Please fill up the fields!!"]);
     }
     if (!req.file?.mimetype.startsWith("image/")) {
-      throw CustomError.createError("Selected file is not an Image!!");
+      throw new CustomError(400,["Selected file is not an Image!!"]);
     }
     if (email?.trim() === "") {
-      throw CustomError.createError("Please enter a email!!", 400);
+      throw new CustomError(400,["Please enter a email!!"]);
     }
 
     if (!emailRegex.test(email)) {
-      throw CustomError.createError("Please enter a valid email!!", 400);
+      throw new CustomError(400,["Please enter a valid email!!"]);
     }
 
     if (mobile?.trim() === "") {
-      throw CustomError.createError("Please enter your Mobile Number!!", 400);
+      throw new CustomError(400,["Please enter your Mobile Number!!"]);
       return;
     }
 
     if (mobile?.length !== 10) {
-      throw CustomError.createError("Mobile Number should be 10 Digits!!", 400);
+      throw new CustomError(400,["Mobile Number should be 10 Digits!!"]);
       return;
     }
 
     if (!mobileRegex.test(mobile)) {
-      throw CustomError.createError("Invalid Mobile Number", 400);
+      throw new CustomError(400,["Invalid Mobile Number"]);
       return;
     }
 
     if (password?.trim() === "") {
-      throw CustomError.createError("Please enter a password!!", 400);
+      throw new CustomError(400,["Please enter a password!!"]);
     }
 
     if (password?.trim().length < 8) {
-      throw CustomError.createError(
-        "Password should contain minimum 8 digits!!",
-        400
+      throw new CustomError(400,[
+        "Password should contain minimum 8 digits!!"]
       );
     }
 
     if (!passwordRegex.test(password)) {
-      throw CustomError.createError(
-        "Password should contain alphabets and digits!!",
-        400
+      throw new CustomError(400,[
+        "Password should contain alphabets and digits!!"]
       );
     }
 
     if (cPassword?.trim() === "") {
-      throw CustomError.createError("Please Confirm your password!!", 400);
+      throw new CustomError(400,["Please Confirm your password!!"]);
     }
 
     if (password?.trim() !== cPassword?.trim()) {
-      throw CustomError.createError("Password Mismatch!!", 400);
+      throw new CustomError(400,["Password Mismatch!!"]);
     }
 
     const userExist = await UserModel.findOne({ email });
 
     if (userExist) {
-      throw CustomError.createError("Account Exists!!", 400);
+      throw new CustomError(400,["Account Exists!!"]);
     }
     console.log(name, email, mobile, password, cPassword);
     const hashed = await hash(password, SALT_ROUNDS);
@@ -213,9 +212,9 @@ export const signup = async (req, res, next) => {
     const mailSend = await sendmail(email, otp);
     console.log(otp);
     if (!mailSend) {
-      const error = new Error();
-      error.statusCode = 500;
-      error.reasons = ["Ooops. Error sending email!!"];
+      const error = new CustomError(500,["Ooops. Error sending email!!"]);
+      // error.statusCode = 500;
+      // error.reasons = ["Ooops. Error sending email!!"];
       throw error;
     }
 
@@ -248,19 +247,19 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const logout = async (req, res, next) => {
+export const logout = async (req : Request, res : Response, next : NextFunction) => {
   try {
     res.cookie("token", null, {
       httpOnly: true,
       secure: true,
-      sameSite:"None",
+      sameSite:"none",
       maxAge: 1000, //1 min
     });
 
     res.cookie("refresh", null, {
       httpOnly: true,
       secure: true,
-      sameSite:"None",
+      sameSite:"none",
       maxAge: 1000, //30 days
     });
     res.status(200).json({ success: true });
@@ -269,45 +268,42 @@ export const logout = async (req, res, next) => {
   }
 };
 
-export const editProfile = async (req, res, next) => {
+export const editProfile = async (req : Request, res : Response, next : NextFunction) : Promise<void> =>  {
   try {
     const { name, email, mobile } = req.body;
-    const { _id } = req.user;
+    const { _id } = req.user as User;
     if (name?.trim() === "" && email?.trim() === "" && mobile?.trim() === "") {
-      throw CustomError.createError("Please fill up the fields!!", 400);
+      throw new CustomError(400,["Please fill up the fields!!"]);
     }
 
     if (email?.trim() === "") {
-      throw CustomError.createError("Please enter a email!!", 400);
+      throw new CustomError(400,["Please enter a email!!"]);
     }
 
     if (!emailRegex.test(email)) {
-      throw CustomError.createError("Please enter a valid email!!", 400);
+      throw new CustomError(400,["Please enter a valid email!!"]);
     }
     if (mobile?.trim() === "") {
-      throw CustomError.createError("Please enter your Mobile Number!!", 400);
-      return;
+      throw new CustomError(400,["Please enter your Mobile Number!!"]);
     }
 
     if (mobile?.length !== 10) {
-      throw CustomError.createError("Mobile Number should be 10 Digits!!", 400);
-      return;
+      throw new CustomError(400,["Mobile Number should be 10 Digits!!"]);
     }
 
     if (!mobileRegex.test(mobile)) {
-      throw CustomError.createError("Invalid Mobile Number", 400);
-      return;
+      throw new CustomError(400,["Invalid Mobile Number"]);
     }
 
     const userExist = await UserModel.findOne({ _id });
 
     if (!userExist) {
-      throw CustomError.createError("Invalid Request!!", 400);
+      throw new CustomError(400,["Invalid Request!!"]);
     }
     let image;
     if (req.file) {
       if (!req.file?.mimetype.startsWith("image/")) {
-        throw CustomError.createError("Selected file is not an Image!!");
+        throw new CustomError(400,["Selected file is not an Image!!"]);
       }
       if (userExist?.image) {
         await destroyFromCloudinary(userExist?.image, USER_PROFILE_FOLDER);
@@ -324,7 +320,7 @@ export const editProfile = async (req, res, next) => {
     }
 
     if (userExist?.email !== email) {
-      const updatable = {
+      const updatable : any = {
         name,
         mobile,
       };
@@ -337,9 +333,9 @@ export const editProfile = async (req, res, next) => {
       const mailSend = await sendmail(email, otp);
       console.log(otp);
       if (!mailSend) {
-        const error = new Error();
-        error.statusCode = 500;
-        error.reasons = ["Ooops. Error sending email!!"];
+        const error = new CustomError(500,["Ooops. Error sending email!!"]);
+        // error.statusCode = 500;
+        // error.reasons = ["Ooops. Error sending email!!"];
         throw error;
       }
       await UserModel.findByIdAndUpdate(
@@ -354,77 +350,75 @@ export const editProfile = async (req, res, next) => {
         );
       }, 60 * 1000);
 
-      return res.status(200).json({ success: userExist?._id, email: email });
-    }
-    console.log(name, email, mobile);
+       res.status(200).json({ success: userExist?._id, email: email });
+    }else{
+      console.log(name, email, mobile);
 
-    const userData = {
-      name,
-      email,
-      mobile,
-    };
-    if (image) {
-      userData.image = image;
+      const userData : any = {
+        name,
+        email,
+        mobile,
+      };
+      if (image) {
+        userData.image = image;
+      }
+      const updatedUser : UserData & Document | null = await UserModel.findByIdAndUpdate(
+        { _id },
+        { $set: userData },
+        { new: true }
+      );
+      console.log(updatedUser);
+      const { password, ...rest } = updatedUser?.toObject();
+      res.status(200).json({ success: rest });
     }
-    const updatedUser = await UserModel.findByIdAndUpdate(
-      { _id },
-      { $set: userData },
-      { new: true }
-    );
-    console.log(updatedUser);
-    const { password, __v, ...rest } = updatedUser.toObject();
-    res.status(200).json({ success: rest });
+    
   } catch (error) {
     next(error);
   }
 };
 
-export const changePassword = async (req, res, next) => {
+export const changePassword = async (req : Request, res : Response, next : NextFunction) => {
   try {
     const { oPassword, password, cPassword } = req.body;
-    const { _id } = req.user;
+    const { _id } = req.user as User;
     if (
       oPassword?.trim() === "" &&
       password?.trim() === "" &&
       cPassword?.trim() === ""
     ) {
-      throw CustomError.createError("Please fill up the fields!!", 400);
+      throw new CustomError(400,["Please fill up the fields!!"]);
     }
 
     if (password?.trim() === "") {
-      throw CustomError.createError("Please enter new password!!", 400);
+      throw new CustomError(400,["Please enter new password!!"]);
     }
 
     if (password?.trim().length < 8) {
-      throw CustomError.createError(
-        "Password should contain minimum 8 digits!!",
-        400
-      );
+      throw new CustomError(400,[
+        "Password should contain minimum 8 digits!!"]);
     }
 
     if (!passwordRegex.test(password)) {
-      throw CustomError.createError(
-        "Password should contain alphabets and digits!!",
-        400
-      );
+      throw new CustomError(400,[
+        "Password should contain alphabets and digits!!"]);
     }
 
     if (cPassword?.trim() === "") {
-      throw CustomError.createError("Please Confirm your Password!!", 400);
+      throw new CustomError(400,["Please Confirm your Password!!"]);
     }
 
     if (password?.trim() !== cPassword?.trim()) {
-      throw CustomError.createError("Password mismatch!!", 400);
+      throw new CustomError(400,["Password mismatch!!"]);
     }
 
     const userExist = await UserModel.findOne({ _id });
 
     if (!userExist) {
-      throw CustomError.createError("Invalid User!!", 400);
+      throw new CustomError(400,["Invalid User!!"]);
     }
     const isValidPass = await compare(oPassword, userExist.password);
     if (!isValidPass) {
-      throw CustomError.createError("Invalid Old Password!!", 400);
+      throw new CustomError(400,["Invalid Old Password!!"]);
     }
     const hashed = await hash(password, SALT_ROUNDS);
     const userData = {
@@ -437,9 +431,9 @@ export const changePassword = async (req, res, next) => {
   }
 };
 
-export const manageMFA = async (req, res, next) => {
+export const manageMFA = async (req : Request, res : Response, next : NextFunction) => {
   try {
-    const { _id } = req.user;
+    const { _id } = req.user as User;
     const userPreference = await UserModel.findById({ _id });
     await UserModel.findByIdAndUpdate(
       { _id },
@@ -453,7 +447,7 @@ export const manageMFA = async (req, res, next) => {
   }
 };
 
-export const verifyOtp = async (req, res, next) => {
+export const verifyOtp = async (req : Request, res : Response, next : NextFunction) => {
   try {
     const { id, otp, from, email } = req.body;
 
@@ -461,7 +455,7 @@ export const verifyOtp = async (req, res, next) => {
 
     const userExist = await UserModel.findById({ _id: id });
     if (!userExist?.mfaSecret) {
-      throw CustomError.createError("OTP timed out!!", 400);
+      throw new CustomError(400,["OTP timed out!!"]);
     }
     const isVerified = await compare(otp, userExist.mfaSecret);
     if (isVerified) {
@@ -472,7 +466,7 @@ export const verifyOtp = async (req, res, next) => {
         );
       }
     } else {
-      throw CustomError.createError("Invalid OTP!!", 400);
+      throw new CustomError(400,["Invalid OTP!!"]);
     }
     if (from === "SIGNUP") {
       res.status(202).json({ success: true });
@@ -489,8 +483,8 @@ export const verifyOtp = async (req, res, next) => {
         incomingRequests: userExist.incomingRequests,
         requestedUsers: userExist.requestedUsers,
       };
-      const access_token = await createToken({ _id: userData._id });
-      const refresh_token = await createRefreshToken({ _id: userData._id });
+      const access_token = await createToken({ _id: userData._id.toString() });
+      const refresh_token = await createRefreshToken({ _id: userData._id.toString() });
       await UserModel.findByIdAndUpdate(
         { _id: userData._id },
         { $set: { lastLoginTime: new Date() } }
@@ -499,14 +493,14 @@ export const verifyOtp = async (req, res, next) => {
       res.cookie("token", access_token, {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
+        sameSite:"none",
         maxAge: 60 * 1000, //1 min
       });
 
       res.cookie("refresh", refresh_token, {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
+        sameSite:"none",
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
       });
       res.status(200).json({ user: userData });
@@ -528,7 +522,7 @@ export const verifyOtp = async (req, res, next) => {
   }
 };
 
-export const resendOtp = async (req,res) =>{
+export const resendOtp = async (req : Request,res : Response,next : NextFunction) =>{
   try {
     const { email } = req.body;
     const otp = generateSecretKey();
@@ -537,9 +531,9 @@ export const resendOtp = async (req,res) =>{
       const mailSend = await sendmail(email, otp);
       console.log(otp);
       if (!mailSend) {
-        const error = new Error();
-        error.statusCode = 500;
-        error.reasons = ["Ooops. Error sending email!!"];
+        const error = new CustomError(500, ["Ooops. Error sending email!!"]);
+        // error.statusCode = 500;
+        // error.reasons = ["Ooops. Error sending email!!"];
         throw error;
       }
       await UserModel.findOneAndUpdate(

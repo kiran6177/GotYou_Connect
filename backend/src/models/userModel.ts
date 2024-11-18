@@ -29,10 +29,6 @@ const userSchema = new mongoose.Schema({
     mfaSecret:{
         type:String,
     },
-    password:{
-        type:String,
-        required:true
-    },
     lastLoginTime:{
         type:Date,
         required:true

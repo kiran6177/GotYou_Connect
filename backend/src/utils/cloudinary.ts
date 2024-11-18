@@ -10,7 +10,7 @@ cloudinaryV2.config({
   api_secret: process.env.CLOUD_API_SECRET,
 });
 
-async function destroyFromCloudinary(url, FOLDER) {
+async function destroyFromCloudinary(url : string, FOLDER : string) {
   try {
     const publicId = url?.split("/").reverse()[0].split(".")[0];
     await cloudinaryV2.uploader.destroy(
@@ -23,8 +23,9 @@ async function destroyFromCloudinary(url, FOLDER) {
         }
       }
     );
-  } catch (error) {
-    throw new Error(error);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    throw new Error(errorMessage);
   }
 }
 

@@ -3,7 +3,7 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
-const MONGOURL = process.env.MONGOURL
+const MONGOURL = process.env.MONGOURL as string
 export const connection = ()=>{
   
     mongoose.connect(MONGOURL)

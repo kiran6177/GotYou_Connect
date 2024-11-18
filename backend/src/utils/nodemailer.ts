@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
     }
 })
 
-async function sendmail(email,otp){
+async function sendmail(email : string,otp : string){
 try{
     let message = {
         from:Email,
@@ -29,9 +29,9 @@ try{
         return false
     }
 }
-catch(err)
-{   
-    console.log(err.message)
+catch(err){   
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.log(errorMessage);
     return false
 }
 }

@@ -1,16 +1,18 @@
+import { NextFunction, Request, Response } from "express";
 import {
   createToken,
   verifyAccessToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
+import { CustomError } from "../interfaces/customError.js";
 
-export const isUserLogin = async (req, res, next) => {
+export const isUserLogin = async (req : Request, res : Response, next : NextFunction) => {
   try {
     
     if (req.headers && req.headers["authorization"]) {
       const access_token = req.headers["authorization"].split(" ")[1];
-      const decoded = await verifyAccessToken(access_token);
-      if (decoded) {
+      const decoded  = await verifyAccessToken(access_token);
+      if (decoded && typeof decoded !== "boolean") {
         const userWOP = {
           _id: decoded._id,
         };
@@ -21,7 +23,7 @@ export const isUserLogin = async (req, res, next) => {
           const refreshToken = req.cookies["refresh"];
           if (refreshToken) {
             const decoded = await verifyRefreshToken(refreshToken);
-            if (decoded) {
+            if (decoded && typeof decoded !== "boolean") {
               const userWOP = {
                 _id: decoded._id,
               };
@@ -34,26 +36,26 @@ export const isUserLogin = async (req, res, next) => {
               res.cookie("token", newAccessToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite:"None",
+                sameSite:"none",
                 maxAge: 60 * 1000,
               });
               next();
             } else {
-              const error = new Error();
-              error.statusCode = 403;
-              error.reasons = ["Invalid Refresh!!"];
+              const error  = new CustomError(403,["Invalid Refresh!!"]);
+              // error.statusCode = 403;
+              // error.reasons = ["Invalid Refresh!!"];
               throw error;
             }
           } else {
-            const error = new Error();
-            error.statusCode = 403;
-            error.reasons = ["Invalid Token!!"];
+            const error = new CustomError(403,["Invalid Token!!"]);
+            // error.statusCode = 403;
+            // error.reasons = ["Invalid Token!!"];
             throw error;
           }
         } else {
-          const error = new Error();
-          error.statusCode = 403;
-          error.reasons = ["UnAuthorized User!!"];
+          const error = new CustomError(403,["UnAuthorized User!!"]);
+          // error.statusCode = 403;
+          // error.reasons = ;
           throw error;
         }
       }
@@ -62,7 +64,7 @@ export const isUserLogin = async (req, res, next) => {
         const refreshToken = req.cookies["refresh"];
         if (refreshToken) {
           const decoded = await verifyRefreshToken(refreshToken);
-          if (decoded) {
+          if (decoded && typeof decoded !== "boolean") {
             const userWOP = {
               _id: decoded._id,
             };
@@ -74,26 +76,26 @@ export const isUserLogin = async (req, res, next) => {
             res.cookie("token", newAccessToken, {
               httpOnly: true,
               secure: true,
-              sameSite:"None",
+              sameSite:"none",
               maxAge: 60 * 1000,
             });
             next();
           } else {
-            const error = new Error();
-            error.statusCode = 403;
-            error.reasons = ["Invalid Refresh!!"];
+            const error = new CustomError(403,["Invalid Refresh!!"]);
+            // error.statusCode = 403;
+            // error.reasons = ["Invalid Refresh!!"];
             throw error;
           }
         } else {
-          const error = new Error();
-          error.statusCode = 403;
-          error.reasons = ["Invalid Token!!"];
+          const error = new CustomError(403,["Invalid Token!!"]);
+          // error.statusCode = 403;
+          // error.reasons = ["Invalid Token!!"];
           throw error;
         }
       } else {
-        const error = new Error();
-        error.statusCode = 403;
-        error.reasons = ["UnAuthorized User!!"];
+        const error = new CustomError(403,["UnAuthorized User!!"]);
+        // error.statusCode = 403;
+        // error.reasons = ["UnAuthorized User!!"];
         throw error;
       }
     }
